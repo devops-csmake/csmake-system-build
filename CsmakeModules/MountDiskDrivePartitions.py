@@ -146,10 +146,12 @@ class MountDiskDrivePartitions(CsmakeAspect):
                 stderr=self.log.err() )
             if result != 0:
                 self.log.warning("Couldn't remove loopback device")
-        subprocess.check_call(
-            ['sudo', 'ioctl', self.loopbackDevice, '19457'],
+        result = subprocess.call(
+            ['sudo', 'ioctl', device, '19457'],
             stdout=self.log.out(),
-            stderr=self.log.err() )
+            stderr=self.log.err())
+        if result != 0:
+            self.log.warning("Detaching lo device '%' failed", device)
 
         #mountdev = self.partitionMapping[dev]
         subprocess.call(
