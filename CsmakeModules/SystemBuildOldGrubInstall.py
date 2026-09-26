@@ -95,7 +95,7 @@ title CentOS
         try:
             #Create fake dev entries that legacy grub can handle pointing
             # to the system we're building.
-            for name, disk in self.systemEntry['disks'].iteritems():
+            for name, disk in self.systemEntry['disks'].items():
                 if disk['real']:
                     currentdev = '%s%s' % (chosenpath, currentdrive)
                     if os.path.exists(currentdev):
@@ -116,7 +116,7 @@ title CentOS
                         stderr=self.log.err() )
                     self._oldGrubDiskMappings[disk['device']] = currentdev
                     self._deviceMapEntries.append(('hd%d'%currentgrub, currentdev))
-                    for name, part in disk['partitions'].iteritems():
+                    for name, part in disk['partitions'].items():
                         currentPart = "%s%d" % (currentdev, part['number'])
                         partstat = os.stat(part['device'])
                         if not stat.S_ISBLK(partstat.st_mode):

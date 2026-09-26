@@ -420,7 +420,7 @@ class SystemBuildMount(CsmakeAspect):
 
         success = False
         try:
-            mountpts = self.fsEntry.keys()
+            mountpts = list(self.fsEntry.keys())
             #Sorting will ensure that the mountpoints are done
             #in the proper order.../ comes before /boot for example
             mountpts.sort()

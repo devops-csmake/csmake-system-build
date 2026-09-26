@@ -76,7 +76,7 @@ class MountDiskDrivePartitions(CsmakeAspect):
             try:
                 rootlink = subprocess.check_output(
                     ['sudo', 'readlink', os.path.join(proc, 'root') ] )
-                if rootlink.strip() == root:
+                if rootlink.decode('utf-8').strip() == root:
                     _, pid = os.path.split(proc)
                     subprocess.call(
                         ['sudo', 'kill', '-9', pid] )
@@ -322,7 +322,7 @@ class MountDiskDrivePartitions(CsmakeAspect):
                 self.log.error(perr)
                 self.log.failed()
                 return False
-            self.loopbackDevice = pout.strip()
+            self.loopbackDevice = pout.decode('utf-8').strip()
             self.log.debug("Loopback device created: %s", self.loopbackDevice)
 
             if self.wholeDisk:
@@ -342,7 +342,7 @@ class MountDiskDrivePartitions(CsmakeAspect):
                     return False
                 #Get the key/value pairs
                 pairings = []
-                lines = pout.split('\n')
+                lines = pout.decode('utf-8').split('\n')
                 self.log.devdebug("Lines from lsblk: %s", str(lines))
                 for line in lines:
                     if len(line.strip()) == 0:
@@ -379,7 +379,7 @@ class MountDiskDrivePartitions(CsmakeAspect):
                             self.log.warning("Could not get a partition label for %s", pairing['NAME'])
                             self.log.warning(perr)
                         else:
-                            label = pout.strip()
+                            label = pout.decode('utf-8').strip()
                             gotLabel = len(label) != 0
                             if gotLabel:
                                 self.log.info("Got label '%s' for device '%s'", pairing['NAME'], label)
@@ -404,7 +404,7 @@ class MountDiskDrivePartitions(CsmakeAspect):
                 systemLabel = self.options['system-label']
             systemLabelFound = False
             self.partitionMapping = {}
-            for key, value in self.mountMapping.iteritems():
+            for key, value in self.mountMapping.items():
                 device = self.loopbackDevice + key
                 mountpath = os.path.join(
                     self.options['mounts'],

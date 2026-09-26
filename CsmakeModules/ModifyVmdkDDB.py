@@ -39,7 +39,7 @@ class ModifyVmdkDDB(CsmakeModule):
     def _loadDDB(self, filepath):
         with open(filepath, 'rb') as vmdkfile:
             magic = vmdkfile.read(4)
-            if magic != "\x4b\x44\x4d\x56":
+            if magic != b"\x4b\x44\x4d\x56":
                 self.log.error("File '%s' is not a VMDK file", filepath)
                 self.log.failed()
                 return False
@@ -52,7 +52,7 @@ class ModifyVmdkDDB(CsmakeModule):
             vmdkfile.seek(0x200) #offset into the ddb
             self.ddb = vmdkfile.read(ModifyVmdkDDB.DDB_READ_SIZE) #Pretty safe number
                                              #The ddb section is ~0x10000 padded
-            if len(self.ddb) != ModifyVmdkDDB.DDB_READ_SIZE or self.ddb[-1] != '\0':
+            if len(self.ddb) != ModifyVmdkDDB.DDB_READ_SIZE or self.ddb[-1:] != b'\0':
                 self.log.error("Unexpected behavior, punting - attempted to read 8196B of the dde section and either overran the section, didn't read far enough or didn't have enough memory to read the full section all at once")
                 self.log.failed()
                 return False
@@ -65,7 +65,9 @@ class ModifyVmdkDDB(CsmakeModule):
         return True
 
     def _replace(self, fromText, toText):
-        newText = self.ddb.replace(fromText, toText)
+        fromBytes = fromText.encode('utf-8') if isinstance(fromText, str) else fromText
+        toBytes = toText.encode('utf-8') if isinstance(toText, str) else toText
+        newText = self.ddb.replace(fromBytes, toBytes)
         if newText == self.ddb:
             self.log.error("The value '%s' was not replaced", fromText)
             self.log.failed()
@@ -74,13 +76,14 @@ class ModifyVmdkDDB(CsmakeModule):
         if len(self.ddb) > ModifyVmdkDDB.DDB_READ_SIZE:
             self.ddb = self.ddb[:ModifyVmdkDDB.DDB_READ_SIZE]
         else:
-            self.ddb = self.ddb + (ModifyVmdkDDB.DDB_READ_SIZE-len(self.ddb)) * '\0'
+            self.ddb = self.ddb + (ModifyVmdkDDB.DDB_READ_SIZE-len(self.ddb)) * b'\0'
         return True
 
     def _append(self, appendlines):
         if appendlines[-1] != '\n':
             appendlines = appendlines + '\n'
-        self.ddb = self.ddb.replace(len(appendlines)*'\0', appendlines, 1)
+        appendbytes = appendlines.encode('utf-8') if isinstance(appendlines, str) else appendlines
+        self.ddb = self.ddb.replace(len(appendbytes)*b'\0', appendbytes, 1)
         if len(self.ddb) != ModifyVmdkDDB.DDB_READ_SIZE:
             self.log.error("Replace text overran buffer")
             self.log.failed()
@@ -102,7 +105,7 @@ class ModifyVmdkDDB(CsmakeModule):
                 return False
             if not self._loadDDB(froms[0]):
                 return False
-            for key, value in options.iteritems():
+            for key, value in options.items():
                 if key == 'append':
                     if not self._append(value):
                         return False

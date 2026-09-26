@@ -133,7 +133,7 @@ class SystemBuildGrubInstall(CsmakeModule):
         self.systemFileSystemObject = None
         if '/boot' in fsEntry:
             mountpt, device, fstype, fstabid = fsEntry['/boot']
-            for name, value in self.systemEntry['disks'].iteritems():
+            for name, value in self.systemEntry['disks'].items():
                 if device.startswith(value['device']):
                     if not value['real']:
                         self.log.error("/boot is not on a real disk (%s) - this is not supported", value['device'])
@@ -158,7 +158,7 @@ class SystemBuildGrubInstall(CsmakeModule):
         mountpt, device, fstype, fstabid = fsEntry['/']
         self.rootTabId = fstabid
         if self.systemDevice is None:
-            for name, value in self.systemEntry['disks'].iteritems():
+            for name, value in self.systemEntry['disks'].items():
                 if device.startswith(value['device']):
                     if not value['real']:
                         self.log.error("The filesystem for system '%s' does not have a real device to target for booting", taggedEnvKey)

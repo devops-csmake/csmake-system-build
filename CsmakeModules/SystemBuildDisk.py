@@ -171,7 +171,7 @@ class SystemBuildDisk(CsmakeModule):
         try:
             device = subprocess.check_output(
                 ['sudo', 'losetup', '--show', '-f', diskpath] )
-            device = device.strip()
+            device = device.decode('utf-8').strip()
         except:
             self.log.exception("Failed to create the device for the disk")
             self.log.failed()

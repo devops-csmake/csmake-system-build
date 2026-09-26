@@ -17,7 +17,7 @@
 from CsmakeModules.ShellEnv import ShellEnv
 import os
 import os.path
-import urlparse
+import urllib.parse
 import subprocess
 
 class HLinuxConfigApt(ShellEnv):
@@ -99,7 +99,7 @@ class HLinuxConfigApt(ShellEnv):
             configPath,
             'apt' )
         aptURL = options['aptURL']
-        aptServer = urlparse.urlparse(aptURL)[1]
+        aptServer = urllib.parse.urlparse(aptURL)[1]
         release = options['release']
         sections = options['sections']
         debootstrap = options['debootstrap']
@@ -138,7 +138,7 @@ class HLinuxConfigApt(ShellEnv):
             configPath,
             'apt' )
         aptURL = options['aptURL']
-        aptServer = urlparse.urlparse(aptURL)[1]
+        aptServer = urllib.parse.urlparse(aptURL)[1]
         release = options['release']
         sections = options['sections']
         debootstrap = options['debootstrap']

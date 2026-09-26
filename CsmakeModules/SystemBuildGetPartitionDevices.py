@@ -48,7 +48,7 @@ class SystemBuildGetPartitionDevices(CsmakeAspect):
 
     def _getEnvironmentVariables(self):
         results = []
-        for option, envvar in self.options.iteritems():
+        for option, envvar in self.options.items():
             if option.startswith('env_'):
                 results.append((option.lstrip('env_'), envvar))
         return results

@@ -282,7 +282,7 @@ class SystemBuildMsdosPartitions(CsmakeModule):
         self.extensionStart = -1
         self.extensionEnd= -1
 
-        for key, value in options.iteritems():
+        for key, value in options.items():
             if key.startswith('part_'):
                 name = key[5:]
                 partition = [name]

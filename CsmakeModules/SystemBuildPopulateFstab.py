@@ -59,7 +59,7 @@ class SystemBuildPopulateFstab(CsmakeModule):
             return None
         mountLocation = systemEntry['mountInstance']._systemMountLocation()
         lines = []
-        mountpts = fsEntry.keys()
+        mountpts = list(fsEntry.keys())
         mountpts.sort()
         for mountptkey in mountpts:
             mountpt, device, fstype, fstabid = fsEntry[mountptkey]
