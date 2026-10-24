@@ -319,7 +319,7 @@ class MountDiskDrivePartitions(CsmakeAspect):
             pout, perr = p.communicate()
             if p.returncode != 0:
                 self.log.error("Creating loopback device for image failed")
-                self.log.error(perr)
+                self.log.error(perr.decode('utf-8', 'replace'))
                 self.log.failed()
                 return False
             self.loopbackDevice = pout.decode('utf-8').strip()
@@ -337,7 +337,7 @@ class MountDiskDrivePartitions(CsmakeAspect):
                 pout, perr = p.communicate()
                 if p.returncode != 0:
                     self.log.error("Could not get partition listing")
-                    self.log.error(perr)
+                    self.log.error(perr.decode('utf-8', 'replace'))
                     self.log.failed()
                     return False
                 #Get the key/value pairs
@@ -377,7 +377,7 @@ class MountDiskDrivePartitions(CsmakeAspect):
                         gotLabel = False
                         if p.returncode != 0:
                             self.log.warning("Could not get a partition label for %s", pairing['NAME'])
-                            self.log.warning(perr)
+                            self.log.warning(perr.decode('utf-8', 'replace'))
                         else:
                             label = pout.decode('utf-8').strip()
                             gotLabel = len(label) != 0

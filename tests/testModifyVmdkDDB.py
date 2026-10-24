@@ -148,5 +148,64 @@ class TestModifyVmdkDDB(unittest.TestCase):
         self.assertEqual(read_bytes(self.path), before)
 
 
+class TestBuildOptionsAndEdgeCases(unittest.TestCase):
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix='vmdktest')
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.path = os.path.join(self.tmp, 'disk.vmdk')
+        makeVmdk(self.path)
+        self.module = object.__new__(ModifyVmdkDDB)
+        self.module.log = FakeLog()
+
+    def run_build(self, options, froms=None, tos=None):
+        self.module.mapping = FakeMapping(froms or [self.path], tos or [self.path])
+        return self.module.build(options)
+
+    def test_build_non_ascii_text_is_written_as_utf8(self):
+        self.assertTrue(self.run_build({'append': 'ddb.comment = "caf\u00e9"'}))
+        ddb = read_bytes(self.path)[0x200:0x200 + DDB_SIZE]
+        self.assertIn(b'ddb.comment = "caf\xc3\xa9"\n', ddb)
+
+    def test_build_file_shorter_than_the_ddb_section_is_rejected(self):
+        with open(self.path, 'wb') as vmdk:
+            vmdk.write(b'KDMV' + b'\0' * 0x300)
+        before = read_bytes(self.path)
+        self.assertFalse(self.run_build({'append': 'x'}))
+        self.assertEqual(self.module.log.results, ['failed'])
+        self.assertEqual(read_bytes(self.path), before)
+
+    def test_build_different_from_and_to_files_are_rejected(self):
+        other = os.path.join(self.tmp, 'other.vmdk')
+        self.assertFalse(self.run_build({'append': 'x'}, tos=[other]))
+        self.assertEqual(self.module.log.results, ['failed'])
+
+    def test_build_more_than_one_file_is_rejected(self):
+        self.assertFalse(self.run_build({'append': 'x'},
+                                        froms=[self.path, self.path]))
+        self.assertEqual(self.module.log.results, ['failed'])
+
+    def test_build_delete_option_is_not_implemented(self):
+        self.assertFalse(self.run_build({'delete_1': 'ddb.adapterType'}))
+        self.assertEqual(self.module.log.results, ['failed'])
+
+    def test_build_unknown_option_is_rejected(self):
+        self.assertFalse(self.run_build({'frobnicate': 'yes'}))
+        self.assertEqual(self.module.log.results, ['failed'])
+
+    def test_build_substitution_must_be_two_lines(self):
+        for value in ('only one line', 'a\nb\nc'):
+            with self.subTest(value=value):
+                self.module.log.results.clear()
+                self.assertFalse(self.run_build({'substitute_1': value}))
+                self.assertEqual(self.module.log.results, ['failed'])
+
+    def test_build_non_vmdk_file_is_left_untouched(self):
+        makeVmdk(self.path, magic=b'NOPE')
+        before = read_bytes(self.path)
+        self.assertFalse(self.run_build({'append': 'x'}))
+        self.assertEqual(read_bytes(self.path), before)
+
+
 if __name__ == '__main__':
     unittest.main()

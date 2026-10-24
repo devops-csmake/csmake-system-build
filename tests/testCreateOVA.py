@@ -29,17 +29,9 @@ from tests import csmake_alias
 csmake_alias.install()
 
 from CsmakeModules.CreateOVA import CreateOVA
-from tests.helpers import FakeLog
+from tests.helpers import FakeLog, FakeMapping
 
 DISK_BYTES = bytes(range(256)) * 40 + b'\0\xff\x80 binary tail'
-
-
-class FakeMapping:
-    def __init__(self, froms, tos):
-        self.specs = [(froms, tos)]
-
-    def iterspecs(self):
-        return iter(self.specs)
 
 
 class FakeMetadata:
@@ -50,7 +42,7 @@ class FakeMetadata:
         return '1.2.3'
 
 
-class TestCreateOVA(unittest.TestCase):
+class OvaTestCase(unittest.TestCase):
 
     def setUp(self):
         self.tmp = tempfile.mkdtemp(prefix='ovatest')
@@ -62,9 +54,9 @@ class TestCreateOVA(unittest.TestCase):
         self.module = object.__new__(CreateOVA)
         self.module.log = FakeLog()
         self.module.metadata = FakeMetadata()
-        self.module.mapping = FakeMapping(
+        self.module.mapping = FakeMapping([(
             [{'location': self.disk, 'intent': 'appliance'}],
-            [{'location': self.ova}])
+            [{'location': self.ova}])])
         self.options = {
             'vm-name': 'testvm',
             'vm-cpus': '2',
@@ -78,6 +70,9 @@ class TestCreateOVA(unittest.TestCase):
         with tarfile.open(self.ova) as ova:
             return [(member, ova.extractfile(member).read())
                     for member in ova.getmembers()]
+
+
+class TestCreateOVA(OvaTestCase):
 
     def test_build_writes_a_tar_of_ovf_disk_and_manifest_as_bytes(self):
         self.module.build(self.options)
@@ -124,6 +119,92 @@ class TestCreateOVA(unittest.TestCase):
         errors = '\n'.join(self.module.log.messages('error'))
         self.assertIn('centos64: CentOS 4/5/6 (64-bit)', errors)
         self.assertEqual(self.module.log.results, ['failed'])
+
+
+class TestCreateOVAVariants(OvaTestCase):
+    """Options, edge cases and failure paths of build()."""
+
+    def test_build_non_ascii_vm_name_is_utf8_and_sized_in_bytes(self):
+        self.options['vm-name'] = 'caf\u00e9-\u4e2d\u6587'
+        self.module.build(self.options)
+        members = dict((m.name, (m, data)) for m, data in self.readOva())
+        member, data = members['appliance.ovf']
+        self.assertIn('<Name>caf\u00e9-\u4e2d\u6587</Name>', data.decode('utf-8'))
+        self.assertEqual(member.size, len(data))
+        self.assertGreater(len(data), len(data.decode('utf-8')))
+        manifest = members['appliance.mf'][1].decode('utf-8')
+        self.assertIn(hashlib.sha1(data).hexdigest(), manifest)
+
+    def test_build_efi_firmware_and_sata_controller_are_written_to_the_ovf(self):
+        self.options.update(firmware='EFI', **{'disk-controller': 'sata'})
+        self.module.build(self.options)
+        ovf = dict((m.name, d) for m, d in self.readOva())['appliance.ovf'].decode()
+        self.assertIn('vmw:key="firmware" vmw:value="efi"', ovf)
+        self.assertIn('SATA Controller', ovf)
+        self.assertNotIn('SCSI Controller', ovf)
+
+    def test_build_cd_dvd_drive_is_optional(self):
+        self.options['add-cd-dvd-rom'] = 'True'
+        self.module.build(self.options)
+        ovf = dict((m.name, d) for m, d in self.readOva())['appliance.ovf'].decode()
+        self.assertIn('CD/DVD Drive 1', ovf)
+
+    def test_build_several_disks_are_numbered_and_archived_in_order(self):
+        second = os.path.join(self.tmp, 'data.vmdk')
+        with open(second, 'wb') as disk:
+            disk.write(b'second disk')
+        self.module.mapping = FakeMapping(
+            [([{'location': self.disk, 'intent': 'appliance'},
+               {'location': second, 'intent': 'appliance'}],
+              [{'location': self.ova}])])
+        self.module.build(self.options)
+        names = [m.name for m, _ in self.readOva()]
+        self.assertEqual(names, ['appliance.ovf', 'root-disk1.vmdk',
+                                 'data-disk2.vmdk', 'appliance.mf'])
+
+    def test_build_unknown_firmware_fails_without_writing_an_archive(self):
+        self.options['firmware'] = 'openfirmware'
+        self.assertIsNone(self.module.build(self.options))
+        self.assertEqual(self.module.log.results, ['failed'])
+        self.assertFalse(os.path.exists(self.ova))
+
+    def test_build_unknown_manifest_format_fails_without_writing_an_archive(self):
+        self.options['manifest-format'] = 'md5'
+        self.assertIsNone(self.module.build(self.options))
+        self.assertEqual(self.module.log.results, ['failed'])
+        self.assertFalse(os.path.exists(self.ova))
+
+    def test_build_missing_disk_capacity_fails(self):
+        del self.options['disk-capacity-appliance']
+        with self.assertRaises(KeyError):
+            self.module.build(self.options)
+        self.assertEqual(self.module.log.results, ['failed'])
+
+    def test_build_missing_disk_format_fails(self):
+        del self.options['disk-format-appliance']
+        with self.assertRaises(KeyError):
+            self.module.build(self.options)
+        self.assertEqual(self.module.log.results, ['failed'])
+
+    def test_build_unknown_disk_format_lists_the_valid_formats(self):
+        self.options['disk-format-appliance'] = 'Floppy'
+        with self.assertRaises(KeyError):
+            self.module.build(self.options)
+        self.assertIn('VMDK Stream Optimized', self.module.log.messages('error'))
+
+    def test_build_used_size_is_reported_as_populated_size(self):
+        self.module.mapping.specs[0][0][0]['used-size'] = 1234
+        self.module.build(self.options)
+        ovf = dict((m.name, d) for m, d in self.readOva())['appliance.ovf'].decode()
+        self.assertIn('ovf:populatedSize="1234"', ovf)
+
+    def test_package_vm_builds_the_archive(self):
+        self.module.package_vm(self.options)
+        self.assertTrue(os.path.exists(self.ova))
+
+    def test_clean_passes(self):
+        self.module.clean(self.options)
+        self.assertEqual(self.module.log.results, ['passed'])
 
 
 if __name__ == '__main__':
