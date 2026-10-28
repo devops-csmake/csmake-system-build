@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # </copyright>
-from Csmake.CsmakeAspect import CsmakeAspect
+from CsmakeCore.CsmakeAspect import CsmakeAspect
 import subprocess
 import os.path
 import glob
@@ -420,7 +420,7 @@ class SystemBuildMount(CsmakeAspect):
 
         success = False
         try:
-            mountpts = self.fsEntry.keys()
+            mountpts = list(self.fsEntry.keys())
             #Sorting will ensure that the mountpoints are done
             #in the proper order.../ comes before /boot for example
             mountpts.sort()

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # </copyright>
-from Csmake.CsmakeAspect import CsmakeAspect
+from CsmakeCore.CsmakeAspect import CsmakeAspect
 
 class SystemBuildGetPartitionDevices(CsmakeAspect):
     """Purpose: Get the devices associated with the requested mountpoints
@@ -48,7 +48,7 @@ class SystemBuildGetPartitionDevices(CsmakeAspect):
 
     def _getEnvironmentVariables(self):
         results = []
-        for option, envvar in self.options.iteritems():
+        for option, envvar in self.options.items():
             if option.startswith('env_'):
                 results.append((option.lstrip('env_'), envvar))
         return results

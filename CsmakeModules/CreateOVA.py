@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # </copyright>
-from Csmake.CsmakeModule import CsmakeModule
+from CsmakeCore.CsmakeModule import CsmakeModule
 import datetime
 import time
 import os.path
 import tarfile
-import StringIO
+import io
 import hashlib
 
 class CreateOVA(CsmakeModule):
@@ -351,7 +351,7 @@ class CreateOVA(CsmakeModule):
             osid = CreateOVA.OS_TYPES[self.options['os']]
         except KeyError as e:
             self.log.exception("'%s' is an unknown OS.  Valid OS's are:", self.options['os'])
-            for key, values in CreateOVA.OS_TYPES.iteritems():
+            for key, values in CreateOVA.OS_TYPES.items():
                 self.log.error("%s: %s", key, values[1])
             self.log.failed()
             raise e
@@ -653,8 +653,8 @@ class CreateOVA(CsmakeModule):
                 namepart, extpart = os.path.splitext(ovafilename)
 
                 # Write the ovf to the tar
-                buf = '\n'.join(ovflines)
-                ovffile = StringIO.StringIO(buf)
+                buf = ('\n'.join(ovflines)).encode('utf-8')
+                ovffile = io.BytesIO(buf)
                 ovffilename = "%s.ovf" % namepart
                 mflines = []
                 mflines.append(self._makeManifestForFile(ovffile, ovffilename))
@@ -679,8 +679,8 @@ class CreateOVA(CsmakeModule):
                         filter=self._tarFilter)
 
                 # Add the manifest
-                buf = '\n'.join(mflines) + '\n'
-                mffile = StringIO.StringIO(buf)
+                buf = ('\n'.join(mflines) + '\n').encode('utf-8')
+                mffile = io.BytesIO(buf)
                 fileinfo = tarfile.TarInfo("%s.mf" % namepart)
                 fileinfo.size = len(buf)
                 fileinfo = self._tarFilter(fileinfo)

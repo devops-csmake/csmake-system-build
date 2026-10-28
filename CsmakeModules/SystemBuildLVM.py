@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # </copyright>
-from Csmake.CsmakeAspect import CsmakeModule
+from CsmakeCore.CsmakeAspect import CsmakeModule
 import subprocess
 import os.path
 import fnmatch
@@ -151,7 +151,7 @@ class SystemBuildLVM(CsmakeModule):
         vgsplat = subprocess.check_output(
             ['sudo', 'ls', '-R', '/etc/lvm/archive'],
             stderr=self.log.err() )
-        vgfiles = vgsplat.split()[1:]
+        vgfiles = vgsplat.decode('utf-8').split()[1:]
         for vg, pvs in self.vgsCreated:
             for vgfile in vgfiles:
                 if fnmatch.fnmatch(vgfile, '%s_*.vg' % vg):
@@ -213,7 +213,7 @@ class SystemBuildLVM(CsmakeModule):
             currentvgout = subprocess.check_output(
                 ['sudo', 'vgs', '--noheadings'],
                 stderr=self.log.err() )
-            lines = currentvgout.split('\n')
+            lines = currentvgout.decode('utf-8').split('\n')
             for line in lines:
                 if len(line.strip()) == 0:
                     continue
@@ -225,7 +225,7 @@ class SystemBuildLVM(CsmakeModule):
                         break
             self.log.devdebug("currentvgs: ", str(currentvgs))
 
-            for option, value in options.iteritems():
+            for option, value in options.items():
                 if option.startswith("vg_"):
                     volg = option[3:].strip()
                     if volg in currentvgs:
@@ -238,7 +238,7 @@ class SystemBuildLVM(CsmakeModule):
 
             #Set up all pvs
             pvlist = {}
-            for option, value in options.iteritems():
+            for option, value in options.items():
                 if option.startswith('pv_'):
                     phyv = option[3:]
                     phydev = None
@@ -304,7 +304,7 @@ class SystemBuildLVM(CsmakeModule):
                 self.vgsCreated.append((volg, phydevs))
 
             results = {}
-            for option, value in options.iteritems():
+            for option, value in options.items():
                 if option.startswith("lv_"):
                     logv = option[3:]
                     volg, size = value.split(',',1)

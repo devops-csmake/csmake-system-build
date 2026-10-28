@@ -57,7 +57,7 @@ class SystemBuildEfiGrubInstall(SystemBuildGrubInstall):
             options['efi-directory'].strip('/'),
             'startup.nsh')
         with tempfile.NamedTemporaryFile(delete=False) as startup:
-            startup.write(pathToEfi)
+            startup.write(pathToEfi.encode('utf-8'))
             filename = startup.name
         result = subprocess.call(
             ['sudo', 'mv', filename, pathToStartup],

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # </copyright>
-from Csmake.CsmakeModule import CsmakeModule
+from CsmakeCore.CsmakeModule import CsmakeModule
 import subprocess
 import os.path
 import os
@@ -171,7 +171,7 @@ class SystemBuildDisk(CsmakeModule):
         try:
             device = subprocess.check_output(
                 ['sudo', 'losetup', '--show', '-f', diskpath] )
-            device = device.strip()
+            device = device.decode('utf-8').strip()
         except:
             self.log.exception("Failed to create the device for the disk")
             self.log.failed()

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # </copyright>
-from Csmake.CsmakeModule import CsmakeModule
+from CsmakeCore.CsmakeModule import CsmakeModule
 import subprocess
 import re
 
@@ -282,7 +282,7 @@ class SystemBuildMsdosPartitions(CsmakeModule):
         self.extensionStart = -1
         self.extensionEnd= -1
 
-        for key, value in options.iteritems():
+        for key, value in options.items():
             if key.startswith('part_'):
                 name = key[5:]
                 partition = [name]

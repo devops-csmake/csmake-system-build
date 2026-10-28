@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # </copyright>
-from Csmake.CsmakeModule import CsmakeModule
+from CsmakeCore.CsmakeModule import CsmakeModule
 import subprocess
 import os.path
 import os
@@ -59,7 +59,7 @@ class SystemBuildPopulateFstab(CsmakeModule):
             return None
         mountLocation = systemEntry['mountInstance']._systemMountLocation()
         lines = []
-        mountpts = fsEntry.keys()
+        mountpts = list(fsEntry.keys())
         mountpts.sort()
         for mountptkey in mountpts:
             mountpt, device, fstype, fstabid = fsEntry[mountptkey]

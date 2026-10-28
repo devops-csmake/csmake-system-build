@@ -41,8 +41,8 @@ manufacturer=Cardinal Peak Technologies
 #  first listed package.
 # Ubuntu 16.04 can use qemu-utils or qemu-img because qemu-img
 #   in 16.04's qemu-utils is new enough to handle desired formats
-depends=python (>= 2.6), csmake, qemu-img | qemu-utils, vbox-img
-#depends=python (>= 2.6), csmake, qemu-img, vbox-img
+depends=python (>= 3.6), csmake, qemu-img | qemu-utils, vbox-img
+#depends=python (>= 3.6), csmake, qemu-img, vbox-img
 recommends=util-linux, gdisk
 suggests=csmake-providers
 keywords=make build development system vm
@@ -52,9 +52,8 @@ classifiers=
     Intended Audience :: Developers
     Topic :: Software Development :: Build Tools
     Topic :: System :: Installation/Setup
-    Programming Language :: Python :: 2
-    Programming Language :: Python :: 2.6
-    Programming Language :: Python :: 2.7
+    Programming Language :: Python :: 3
+    Programming Language :: Python :: 3 :: Only
     License :: OSI Approved :: GNU General Public License v3 (GPLv3)
 **files=
     <CsmakeModules (python:csmake-modules)> CsmakeModules/*.py
